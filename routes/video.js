@@ -6,8 +6,6 @@ const OpenAI = require("openai");
 const fs = require("fs");
 const path = require("path");
 
-const ytdl = require("@distube/ytdl-core");
-
 require("dotenv").config();
 
 
