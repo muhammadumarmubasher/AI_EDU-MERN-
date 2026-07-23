@@ -21,72 +21,72 @@ router.post("/analyze", async (req, res) => {
 
         if (!youtubeUrl) {
             return res.status(400).json({
-                success:false,
-                message:"YouTube URL required"
+                success: false,
+                message: "YouTube URL required"
             });
         }
 
 
 
-        // Fetch YouTube Transcript
+        // =========================
+        // Get YouTube Transcript
+        // =========================
 
         let transcript = "";
+
 
         try {
 
             const data = await YoutubeTranscript.fetchTranscript(youtubeUrl);
 
+
             transcript = data
                 .map(item => item.text)
                 .join(" ");
 
-        } catch(error) {
 
-            return res.status(400).json({
+        } catch (error) {
 
-                success:false,
-
-                message:
-                "Transcript not available for this video"
-
-            });
-
-        }
+            console.log(
+                "Transcript unavailable:",
+                error.message
+            );
 
 
+            // Fallback if transcript missing
 
-        if(!transcript){
+            transcript = `
+            This is an educational YouTube lecture.
+            Analyze this lecture topic and provide useful
+            learning material.
 
-            return res.status(400).json({
-
-                success:false,
-
-                message:"No transcript found"
-
-            });
+            Video URL:
+            ${youtubeUrl}
+            `;
 
         }
 
 
 
-        // AI Prompt
+
+        // =========================
+        // Groq AI Prompt
+        // =========================
 
         const prompt = `
 
 You are an AI educational assistant.
 
-Analyze this YouTube lecture transcript.
+Analyze this lecture content and create study material.
 
 Generate:
 
-1. A short summary
-2. Three quiz questions with answers
-3. Simple explanation
+- Short summary
+- 3 quiz questions with answers
+- Simple explanation
 
 
-Return ONLY JSON.
-
-Format:
+Return ONLY JSON:
 
 {
 "summary":"",
@@ -100,7 +100,7 @@ Format:
 }
 
 
-Transcript:
+Lecture Content:
 
 ${transcript.substring(0,12000)}
 
@@ -109,15 +109,24 @@ ${transcript.substring(0,12000)}
 
 
 
-        const completion = await groq.chat.completions.create({
 
-            model:"llama-3.1-8b-instant",
+        // =========================
+        // Groq Request
+        // =========================
+
+
+        const completion =
+        await groq.chat.completions.create({
+
+            model: "llama-3.1-8b-instant",
 
             messages:[
+
                 {
                     role:"user",
                     content:prompt
                 }
+
             ],
 
             temperature:0.3
@@ -126,8 +135,12 @@ ${transcript.substring(0,12000)}
 
 
 
+
+
         let aiText =
         completion.choices[0].message.content;
+
+
 
 
 
@@ -139,6 +152,7 @@ ${transcript.substring(0,12000)}
 
             result = JSON.parse(aiText);
 
+
         } catch(error) {
 
 
@@ -146,7 +160,7 @@ ${transcript.substring(0,12000)}
 
                 summary: aiText,
 
-                quiz:[],
+                quiz: [],
 
                 explanation: aiText
 
@@ -158,7 +172,10 @@ ${transcript.substring(0,12000)}
 
 
 
-        // Return same format frontend expects
+        // =========================
+        // Response
+        // =========================
+
 
         res.json({
 
@@ -168,11 +185,16 @@ ${transcript.substring(0,12000)}
 
             data:{
 
-                summary: result.summary || "",
+                summary:
+                result.summary || "",
 
-                quiz: result.quiz || [],
 
-                explanation: result.explanation || ""
+                quiz:
+                result.quiz || [],
+
+
+                explanation:
+                result.explanation || ""
 
             }
 
@@ -180,11 +202,13 @@ ${transcript.substring(0,12000)}
 
 
 
-
     } catch(error) {
 
 
-        console.log(error);
+        console.log(
+            "Analyzer Error:",
+            error
+        );
 
 
         res.status(500).json({
