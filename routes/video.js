@@ -2,9 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const Groq = require("groq-sdk");
-const OpenAI = require("openai");
-const fs = require("fs");
-const path = require("path");
+const { YoutubeTranscript } = require("youtube-transcript");
 
 require("dotenv").config();
 
@@ -14,13 +12,8 @@ const groq = new Groq({
 });
 
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
-});
 
-
-
-router.post("/analyze", async (req, res) => {
+router.post("/analyze", async (req,res)=>{
 
     try {
 
@@ -28,108 +21,51 @@ router.post("/analyze", async (req, res) => {
         const { youtubeUrl } = req.body;
 
 
-        if (!youtubeUrl) {
+        if(!youtubeUrl){
 
             return res.status(400).json({
-
                 success:false,
                 message:"YouTube URL required"
-
             });
 
         }
 
 
 
-        // =========================
-        // Download Audio
-        // =========================
-
-
-        const audioPath =
-        path.join(__dirname, "audio.mp3");
+        let transcript = "";
 
 
 
-        const audioStream =
-        ytdl(youtubeUrl, {
-
-            filter:"audioonly",
-            quality:"highestaudio"
-
-        });
+        try{
 
 
-
-        const writeStream =
-        fs.createWriteStream(audioPath);
-
+            const data =
+            await YoutubeTranscript.fetchTranscript(youtubeUrl);
 
 
-        audioStream.pipe(writeStream);
+            transcript =
+            data
+            .map(item=>item.text)
+            .join(" ");
 
 
 
-        await new Promise((resolve, reject)=>{
+        }
+        catch(error){
 
-            writeStream.on("finish", resolve);
-
-            writeStream.on("error", reject);
-
-        });
-
-
-
-
-
-        // =========================
-        // Whisper Transcription
-        // =========================
-
-
-        const transcription =
-        await openai.audio.transcriptions.create({
-
-            file:
-            fs.createReadStream(audioPath),
-
-            model:"whisper-1"
-
-        });
-
-
-
-        const transcript =
-        transcription.text;
-
-
-
-        if(!transcript){
 
             return res.status(400).json({
 
                 success:false,
 
-                message:"Transcript could not be generated"
+                message:
+                "This video does not have captions/transcript available"
 
             });
 
+
         }
 
-
-
-
-        // Remove audio file
-
-        fs.unlinkSync(audioPath);
-
-
-
-
-
-        // =========================
-        // Groq AI Analysis
-        // =========================
 
 
         const prompt = `
@@ -138,14 +74,14 @@ You are an AI educational assistant.
 
 Analyze this lecture transcript.
 
-Create:
+Generate:
 
 1. Short summary
 2. Three quiz questions with answers
 3. Simple explanation
 
 
-Return ONLY JSON:
+Return JSON only:
 
 {
 "summary":"",
@@ -167,20 +103,16 @@ ${transcript.substring(0,12000)}
 
 
 
-
-
         const completion =
         await groq.chat.completions.create({
 
             model:"llama-3.1-8b-instant",
 
             messages:[
-
                 {
                     role:"user",
                     content:prompt
                 }
-
             ],
 
             temperature:0.3
@@ -189,36 +121,32 @@ ${transcript.substring(0,12000)}
 
 
 
-
-
-        let aiText =
-        completion.choices[0].message.content;
-
-
-
         let result;
 
 
-        try {
+        try{
 
             result =
-            JSON.parse(aiText);
+            JSON.parse(
+                completion.choices[0].message.content
+            );
 
         }
-        catch(error){
+        catch{
 
             result={
 
-                summary:aiText,
+                summary:
+                completion.choices[0].message.content,
 
                 quiz:[],
 
-                explanation:aiText
+                explanation:
+                completion.choices[0].message.content
 
             };
 
         }
-
 
 
 
@@ -230,17 +158,11 @@ ${transcript.substring(0,12000)}
 
             data:{
 
+                summary:result.summary || "",
 
-                summary:
-                result.summary || "",
+                quiz:result.quiz || [],
 
-
-                quiz:
-                result.quiz || [],
-
-
-                explanation:
-                result.explanation || ""
+                explanation:result.explanation || ""
 
             }
 
@@ -252,10 +174,7 @@ ${transcript.substring(0,12000)}
     catch(error){
 
 
-        console.log(
-            "Analyzer Error:",
-            error.message
-        );
+        console.log(error);
 
 
         res.status(500).json({
