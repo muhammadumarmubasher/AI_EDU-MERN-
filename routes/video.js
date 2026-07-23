@@ -1,7 +1,12 @@
 const express = require("express");
 const router = express.Router();
+
 const Groq = require("groq-sdk");
-const { Innertube } = require("youtubei.js");
+const OpenAI = require("openai");
+const fs = require("fs");
+const path = require("path");
+
+const ytdl = require("@distube/ytdl-core");
 
 require("dotenv").config();
 
@@ -11,39 +16,27 @@ const groq = new Groq({
 });
 
 
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+});
+
+
 
 router.post("/analyze", async (req, res) => {
 
     try {
 
+
         const { youtubeUrl } = req.body;
 
 
         if (!youtubeUrl) {
+
             return res.status(400).json({
+
                 success:false,
                 message:"YouTube URL required"
-            });
-        }
 
-
-
-        // =========================
-        // Extract Video ID
-        // =========================
-
-        const videoId =
-            youtubeUrl.includes("youtu.be")
-            ? youtubeUrl.split("/").pop().split("?")[0]
-            : new URL(youtubeUrl).searchParams.get("v");
-
-
-
-        if(!videoId){
-
-            return res.status(400).json({
-                success:false,
-                message:"Invalid YouTube URL"
             });
 
         }
@@ -51,81 +44,93 @@ router.post("/analyze", async (req, res) => {
 
 
         // =========================
-        // Get Transcript
+        // Download Audio
         // =========================
 
-        let transcript = "";
 
-
-        try {
-
-
-            const youtube = await Innertube.create();
-
-
-            const info =
-            await youtube.getInfo(videoId);
+        const audioPath =
+        path.join(__dirname, "audio.mp3");
 
 
 
-            const captions =
-            info.captions;
+        const audioStream =
+        ytdl(youtubeUrl, {
+
+            filter:"audioonly",
+            quality:"highestaudio"
+
+        });
 
 
 
-            if(!captions){
-
-                throw new Error(
-                    "No captions available"
-                );
-
-            }
+        const writeStream =
+        fs.createWriteStream(audioPath);
 
 
 
-            const track =
-            captions.getDefault();
-
-
-            const caption =
-            await track.get();
+        audioStream.pipe(writeStream);
 
 
 
-            transcript =
-            caption
-            .map(item => item.text)
-            .join(" ");
+        await new Promise((resolve, reject)=>{
+
+            writeStream.on("finish", resolve);
+
+            writeStream.on("error", reject);
+
+        });
 
 
 
-        } catch(error){
 
 
-            console.log(
-                "Transcript Error:",
-                error.message
-            );
+        // =========================
+        // Whisper Transcription
+        // =========================
 
+
+        const transcription =
+        await openai.audio.transcriptions.create({
+
+            file:
+            fs.createReadStream(audioPath),
+
+            model:"whisper-1"
+
+        });
+
+
+
+        const transcript =
+        transcription.text;
+
+
+
+        if(!transcript){
 
             return res.status(400).json({
 
                 success:false,
 
-                message:
-                "This video does not have captions/transcript available"
+                message:"Transcript could not be generated"
 
             });
-
 
         }
 
 
 
 
+        // Remove audio file
+
+        fs.unlinkSync(audioPath);
+
+
+
+
 
         // =========================
-        // Groq AI
+        // Groq AI Analysis
         // =========================
 
 
@@ -133,7 +138,7 @@ router.post("/analyze", async (req, res) => {
 
 You are an AI educational assistant.
 
-Analyze this YouTube lecture transcript.
+Analyze this lecture transcript.
 
 Create:
 
@@ -165,6 +170,7 @@ ${transcript.substring(0,12000)}
 
 
 
+
         const completion =
         await groq.chat.completions.create({
 
@@ -185,6 +191,8 @@ ${transcript.substring(0,12000)}
 
 
 
+
+
         let aiText =
         completion.choices[0].message.content;
 
@@ -193,7 +201,7 @@ ${transcript.substring(0,12000)}
         let result;
 
 
-        try{
+        try {
 
             result =
             JSON.parse(aiText);
@@ -216,7 +224,6 @@ ${transcript.substring(0,12000)}
 
 
 
-
         res.json({
 
             success:true,
@@ -224,6 +231,7 @@ ${transcript.substring(0,12000)}
             message:"Analysis completed",
 
             data:{
+
 
                 summary:
                 result.summary || "",
@@ -245,6 +253,7 @@ ${transcript.substring(0,12000)}
     }
     catch(error){
 
+
         console.log(
             "Analyzer Error:",
             error.message
@@ -259,7 +268,9 @@ ${transcript.substring(0,12000)}
 
         });
 
+
     }
+
 
 });
 
