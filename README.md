@@ -1,206 +1,201 @@
-\# 🎓 AI Powered Educational System
-
-
+# 🎓 AI Powered Educational System
 
 <p align="center">
 
+<b>An AI Based Smart Learning Platform Built with MERN Stack</b>
 
+</p>
 
-An AI-based learning platform that helps students understand lectures using Artificial Intelligence.
+<p align="center">
 
+![React](https://img.shields.io/badge/Frontend-React.js-blue?style=for-the-badge&logo=react)
 
+![Node](https://img.shields.io/badge/Backend-Node.js-green?style=for-the-badge&logo=node.js)
+
+![Express](https://img.shields.io/badge/API-Express.js-black?style=for-the-badge&logo=express)
+
+![MongoDB](https://img.shields.io/badge/Database-MongoDB-success?style=for-the-badge&logo=mongodb)
+
+![AI](https://img.shields.io/badge/AI-Groq%20Llama-orange?style=for-the-badge)
 
 </p>
 
 
+---
 
-<p align="center">
+# 📌 Project Description
 
+AI Powered Educational System is an intelligent learning platform that uses Artificial Intelligence to improve the learning experience of students.
 
+The system allows users to analyze educational videos, extract important information, generate summaries, create quizzes, and get AI-powered explanations.
 
-🚀 MERN Stack | 🤖 Groq AI | 🍃 MongoDB Atlas | ☁️ Render Deployment
+The main purpose of this project is to provide a smart, interactive, and personalized learning environment.
 
 
+---
 
-</p>
+# 🌐 Live Application
 
+🚀 **Live URL**
 
+https://ai-edu-mern.onrender.com
 
-\---
 
+---
 
+# 🎯 Project Goals
 
-\## 📌 Overview
+| Goal | Description |
+|---|---|
+| Smart Education | Provide AI assisted learning |
+| Video Analysis | Convert lectures into learning material |
+| Automation | Generate summaries and quizzes automatically |
+| Better Understanding | Explain complex topics easily |
 
 
+---
 
-AI Powered Educational System is a modern learning platform designed to improve students' learning experience.
+# ✨ Features
 
 
+## 🔐 Authentication System
 
-The system uses Artificial Intelligence to analyze educational videos, extract important information, generate summaries, create quizzes, and provide explanations.
+| Feature | Description |
+|---|---|
+| User Registration | Create new account |
+| User Login | Secure login system |
+| JWT Authentication | Secure user sessions |
+| Password Security | bcrypt password hashing |
 
 
+---
 
-The goal of this project is to make online learning smarter, faster, and more interactive.
+## 🎥 AI Video Analyzer
 
+| Feature | Description |
+|---|---|
+| YouTube URL Input | User provides lecture link |
+| Transcript Extraction | Extract lecture transcript |
+| AI Processing | Analyze educational content |
+| Summary Generator | Generate lecture summaries |
+| Quiz Generator | Create questions and answers |
+| Explanation System | Explain difficult concepts |
 
 
-\---
+---
 
+# 🛠️ Technology Stack
 
 
-\# ✨ Features
-
-
-
-\## 👤 User Authentication
-
-
-
-\- User Registration
-
-\- User Login
-
-\- JWT based authentication
-
-\- Secure password hashing using bcrypt
-
-
-
-
-
-\## 🎥 AI Video Analyzer
-
-
-
-Users can provide a YouTube lecture URL.
-
-
-
-The system:
-
-
-
-1\. Extracts video transcript
-
-2\. Processes lecture content
-
-3\. Sends information to AI model
-
-4\. Generates educational output
-
-
-
-
-
-Generated results:
-
-
-
-✅ Lecture Summary  
-
-✅ Quiz Questions  
-
-✅ Answers  
-
-✅ Detailed Explanation  
-
-
-
-
-
-\---
-
-
-
-\# 🛠️ Technology Stack
-
-
-
-\## Frontend
-
-
+## Frontend
 
 | Technology | Purpose |
-
 |---|---|
-
 | React.js | User Interface |
-
 | JavaScript | Application Logic |
-
-| HTML5 | Structure |
-
+| HTML5 | Web Structure |
 | CSS3 | Styling |
-
-| Axios | API Communication |
-
+| Axios | API Requests |
 | React Router | Navigation |
 
 
+---
 
-
-
-\## Backend
-
-
+## Backend
 
 | Technology | Purpose |
-
 |---|---|
-
-| Node.js | Runtime Environment |
-
+| Node.js | Server Runtime |
 | Express.js | Backend Framework |
-
+| REST API | Communication |
 | JWT | Authentication |
-
-| bcryptjs | Password Security |
-
-| REST API | Client Server Communication |
+| bcryptjs | Password Encryption |
 
 
+---
 
-
-
-\## Database
-
-
+## Database
 
 | Technology | Purpose |
-
 |---|---|
-
 | MongoDB Atlas | Cloud Database |
-
 | Mongoose | Database Modeling |
 
 
+---
 
-
-
-\## Artificial Intelligence
-
-
+## Artificial Intelligence
 
 | Technology | Purpose |
-
 |---|---|
-
-| Groq AI API | AI Processing |
-
+| Groq API | AI Integration |
 | Llama Model | Text Generation |
+| YouTube Transcript API | Transcript Extraction |
+
+
+---
+
+# 🏗️ System Architecture
+
+                USER
+
+                  |
+
+                  |
+
+          React Frontend
+
+                  |
+
+                  |
+
+          Express REST API
+
+                  |
+
+                  |
+
+          Node.js Backend
+
+          /             \
+
+         /               \
+
+ MongoDB Atlas        Groq AI
+
+   Database          Llama Model
 
 
 
+---
+
+# 🔌 API Documentation
 
 
-\---
+## Authentication APIs
 
 
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | /api/auth/register | Register new user |
+| POST | /api/auth/login | Login user |
 
-\# 🏗️ System Architecture
+
+---
+
+## AI APIs
 
 
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | /api/video/analyze | Analyze video using AI |
 
+
+Example Request:
+
+```json
+{
+ "youtubeUrl":"youtube_video_url",
+ "option":"summary",
+ "question":"Explain this topic"
+}
