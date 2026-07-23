@@ -1,10 +1,18 @@
 const express = require("express");
 const router = express.Router();
 
+const OpenAI = require("openai");
 const Groq = require("groq-sdk");
-const { YoutubeTranscript } = require("youtube-transcript");
+const { exec } = require("youtube-dl-exec");
+const fs = require("fs");
+const path = require("path");
 
 require("dotenv").config();
+
+
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+});
 
 
 const groq = new Groq({
@@ -17,82 +25,67 @@ router.post("/analyze", async (req,res)=>{
 
 try{
 
-
 const {youtubeUrl}=req.body;
 
 
 if(!youtubeUrl){
-
 return res.status(400).json({
-
 success:false,
 message:"YouTube URL required"
-
 });
-
 }
 
 
+// Download audio
 
-// GET TRANSCRIPT
-
-let transcript="";
-
-
-try{
+const audioPath =
+path.join(__dirname,"audio.mp3");
 
 
-const data =
-await YoutubeTranscript.fetchTranscript(youtubeUrl);
-
-
-
-transcript =
-data.map(item=>item.text).join(" ");
-
-
-
+await exec(
+youtubeUrl,
+{
+extractAudio:true,
+audioFormat:"mp3",
+output:audioPath
 }
+);
 
-catch(error){
 
 
-return res.status(400).json({
+// Whisper transcription
 
-success:false,
+const transcription =
+await openai.audio.transcriptions.create({
 
-message:
-"This video does not have captions/transcript available"
+file: fs.createReadStream(audioPath),
+
+model:"whisper-1"
 
 });
 
 
-}
+const transcript =
+transcription.text;
 
 
 
 if(!transcript){
 
 return res.status(400).json({
-
 success:false,
-
-message:"Transcript empty"
-
+message:"Transcript generation failed"
 });
 
 }
 
 
 
-// GROQ AI
-
+// Groq Analysis
 
 const prompt = `
 
-You are an AI educational assistant.
-
-Analyze this lecture transcript.
+Analyze this lecture.
 
 Create:
 
@@ -101,7 +94,7 @@ Create:
 3. Simple explanation
 
 
-Return JSON only:
+Return JSON:
 
 {
 "summary":"",
@@ -143,7 +136,6 @@ temperature:0.3
 
 let result;
 
-
 try{
 
 result =
@@ -153,7 +145,7 @@ completion.choices[0].message.content
 
 
 }
-catch(e){
+catch{
 
 result={
 
@@ -167,9 +159,7 @@ completion.choices[0].message.content
 
 };
 
-
 }
-
 
 
 
@@ -177,17 +167,7 @@ res.json({
 
 success:true,
 
-message:"Analysis completed",
-
-data:{
-
-summary:result.summary,
-
-quiz:result.quiz,
-
-explanation:result.explanation
-
-}
+data:result
 
 });
 
@@ -197,9 +177,7 @@ explanation:result.explanation
 
 catch(error){
 
-
 console.log(error);
-
 
 res.status(500).json({
 
@@ -208,7 +186,6 @@ success:false,
 message:error.message
 
 });
-
 
 }
 
