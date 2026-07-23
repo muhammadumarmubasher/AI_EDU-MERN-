@@ -5,9 +5,11 @@ const { YoutubeTranscript } = require("youtube-transcript");
 
 require("dotenv").config();
 
+
 const groq = new Groq({
     apiKey: process.env.GROQ_API_KEY
 });
+
 
 
 router.post("/analyze", async (req, res) => {
@@ -25,64 +27,85 @@ router.post("/analyze", async (req, res) => {
         }
 
 
-        // Get transcript
-        let transcriptText = "";
+
+        // Fetch YouTube Transcript
+
+        let transcript = "";
 
         try {
 
-            const transcript = await YoutubeTranscript.fetchTranscript(youtubeUrl);
+            const data = await YoutubeTranscript.fetchTranscript(youtubeUrl);
 
-            transcriptText = transcript
+            transcript = data
                 .map(item => item.text)
                 .join(" ");
 
         } catch(error) {
 
             return res.status(400).json({
+
                 success:false,
-                message:"Unable to fetch YouTube transcript. Try another video."
+
+                message:
+                "Transcript not available for this video"
+
             });
 
         }
 
 
 
-        if(!transcriptText){
+        if(!transcript){
 
             return res.status(400).json({
+
                 success:false,
-                message:"No transcript found."
+
+                message:"No transcript found"
+
             });
 
         }
 
 
+
+        // AI Prompt
 
         const prompt = `
 
-You are an educational AI assistant.
+You are an AI educational assistant.
 
-Analyze this lecture transcript:
+Analyze this YouTube lecture transcript.
 
-${transcriptText.substring(0,12000)}
+Generate:
+
+1. A short summary
+2. Three quiz questions with answers
+3. Simple explanation
 
 
-Return ONLY valid JSON.
+Return ONLY JSON.
 
 Format:
 
 {
-"summary":"short lecture summary",
+"summary":"",
 "quiz":[
 {
-"question":"question",
-"answer":"answer"
+"question":"",
+"answer":""
 }
 ],
-"explanation":"simple explanation"
+"explanation":""
 }
 
+
+Transcript:
+
+${transcript.substring(0,12000)}
+
 `;
+
 
 
 
@@ -103,7 +126,7 @@ Format:
 
 
 
-        const aiResponse =
+        let aiText =
         completion.choices[0].message.content;
 
 
@@ -111,20 +134,21 @@ Format:
         let result;
 
 
-        try{
 
-            result = JSON.parse(aiResponse);
+        try {
 
-        }
-        catch{
+            result = JSON.parse(aiText);
+
+        } catch(error) {
+
 
             result = {
 
-                summary:aiResponse,
+                summary: aiText,
 
                 quiz:[],
 
-                explanation:aiResponse
+                explanation: aiText
 
             };
 
@@ -132,22 +156,36 @@ Format:
 
 
 
+
+
+        // Return same format frontend expects
+
         res.json({
 
             success:true,
 
             message:"Analysis completed",
 
-            data:result
+            data:{
+
+                summary: result.summary || "",
+
+                quiz: result.quiz || [],
+
+                explanation: result.explanation || ""
+
+            }
 
         });
 
 
 
-    }
-    catch(error){
+
+    } catch(error) {
+
 
         console.log(error);
+
 
         res.status(500).json({
 
@@ -157,9 +195,12 @@ Format:
 
         });
 
+
     }
 
+
 });
+
 
 
 module.exports = router;
