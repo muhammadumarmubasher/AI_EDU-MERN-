@@ -1,72 +1,28 @@
-\# 🎓 AI Powered Educational System (MERN Stack)
+\# 🎓 AI Powered Educational System
 
 
 
-An AI-powered educational platform designed to help students understand online lectures more effectively. The system uses Artificial Intelligence to analyze YouTube lectures, generate summaries, create quizzes, and provide explanations using AI models.
+<p align="center">
 
 
 
-The project is built using the MERN stack with Groq AI integration.
+An AI-based learning platform that helps students understand lectures using Artificial Intelligence.
 
 
 
-\---
+</p>
 
 
 
-\# 🚀 Live Demo
+<p align="center">
 
 
 
-https://ai-edu-mern.onrender.com
+🚀 MERN Stack | 🤖 Groq AI | 🍃 MongoDB Atlas | ☁️ Render Deployment
 
 
 
-\---
-
-
-
-\# 🛠️ Technology Stack
-
-
-
-\## Frontend
-
-
-
-The frontend is developed using:
-
-
-
-\- React.js
-
-\- JavaScript (ES6+)
-
-\- HTML5
-
-\- CSS3
-
-\- Axios for API communication
-
-\- React Router for navigation
-
-
-
-Frontend responsibilities:
-
-
-
-\- User interface
-
-\- User authentication pages
-
-\- AI Analyzer interface
-
-\- Sending requests to backend APIs
-
-\- Displaying AI-generated results
-
-
+</p>
 
 
 
@@ -74,37 +30,19 @@ Frontend responsibilities:
 
 
 
-\# Backend
+\## 📌 Overview
 
 
 
-The backend is developed using:
+AI Powered Educational System is a modern learning platform designed to improve students' learning experience.
 
 
 
-\- Node.js
-
-\- Express.js
+The system uses Artificial Intelligence to analyze educational videos, extract important information, generate summaries, create quizzes, and provide explanations.
 
 
 
-Backend responsibilities:
-
-
-
-\- REST API development
-
-\- User authentication
-
-\- Handling AI requests
-
-\- Processing YouTube transcripts
-
-\- Communicating with database
-
-\- Managing application logic
-
-
+The goal of this project is to make online learning smarter, faster, and more interactive.
 
 
 
@@ -112,133 +50,11 @@ Backend responsibilities:
 
 
 
-\# Database
+\# ✨ Features
 
 
 
-Database used:
-
-
-
-\## MongoDB Atlas
-
-
-
-Technology:
-
-
-
-\- MongoDB
-
-\- Mongoose ODM
-
-
-
-Database responsibilities:
-
-
-
-\- User data storage
-
-\- Authentication records
-
-\- Application data management
-
-
-
-
-
-\---
-
-
-
-\# Artificial Intelligence Integration
-
-
-
-AI Model Provider:
-
-
-
-\## Groq AI
-
-
-
-Technology:
-
-
-
-\- Groq SDK
-
-\- Llama 3.1 Model
-
-
-
-AI Features:
-
-
-
-\- Lecture summarization
-
-\- Question answering
-
-\- Explanation generation
-
-\- Quiz generation
-
-
-
-
-
-\---
-
-
-
-\# YouTube Integration
-
-
-
-Technology:
-
-
-
-\- youtube-transcript npm package
-
-
-
-Purpose:
-
-
-
-\- Extract transcripts from YouTube lectures
-
-\- Convert lectures into text
-
-\- Send lecture content to AI model for analysis
-
-
-
-
-
-\---
-
-
-
-\# 🔐 Authentication System
-
-
-
-Authentication is implemented using:
-
-
-
-\- JWT (JSON Web Token)
-
-\- bcryptjs password hashing
-
-
-
-Features:
+\## 👤 User Authentication
 
 
 
@@ -246,31 +62,9 @@ Features:
 
 \- User Login
 
-\- Secure password storage
+\- JWT based authentication
 
-\- Token-based authentication
-
-
-
-
-
-\---
-
-
-
-\# ✨ Main Features
-
-
-
-\## 👤 User Management
-
-
-
-\- Register new users
-
-\- Login system
-
-\- Secure authentication
+\- Secure password hashing using bcrypt
 
 
 
@@ -288,27 +82,29 @@ The system:
 
 
 
-1\. Extracts lecture transcript
+1\. Extracts video transcript
 
-2\. Sends transcript to AI model
+2\. Processes lecture content
 
-3\. Generates educational content
+3\. Sends information to AI model
 
-
-
-
-
-Generated output:
+4\. Generates educational output
 
 
 
-\- Summary
 
-\- Quiz Questions
 
-\- Answers
+Generated results:
 
-\- Explanation
+
+
+✅ Lecture Summary  
+
+✅ Quiz Questions  
+
+✅ Answers  
+
+✅ Detailed Explanation  
 
 
 
@@ -318,7 +114,93 @@ Generated output:
 
 
 
-\# 📂 Project Structure
+\# 🛠️ Technology Stack
+
+
+
+\## Frontend
+
+
+
+| Technology | Purpose |
+
+|---|---|
+
+| React.js | User Interface |
+
+| JavaScript | Application Logic |
+
+| HTML5 | Structure |
+
+| CSS3 | Styling |
+
+| Axios | API Communication |
+
+| React Router | Navigation |
+
+
+
+
+
+\## Backend
+
+
+
+| Technology | Purpose |
+
+|---|---|
+
+| Node.js | Runtime Environment |
+
+| Express.js | Backend Framework |
+
+| JWT | Authentication |
+
+| bcryptjs | Password Security |
+
+| REST API | Client Server Communication |
+
+
+
+
+
+\## Database
+
+
+
+| Technology | Purpose |
+
+|---|---|
+
+| MongoDB Atlas | Cloud Database |
+
+| Mongoose | Database Modeling |
+
+
+
+
+
+\## Artificial Intelligence
+
+
+
+| Technology | Purpose |
+
+|---|---|
+
+| Groq AI API | AI Processing |
+
+| Llama Model | Text Generation |
+
+
+
+
+
+\---
+
+
+
+\# 🏗️ System Architecture
 
 
 
