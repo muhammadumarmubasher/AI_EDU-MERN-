@@ -4,10 +4,12 @@ const router = express.Router();
 const OpenAI = require("openai");
 const Groq = require("groq-sdk");
 const { exec } = require("youtube-dl-exec");
+
 const fs = require("fs");
 const path = require("path");
 
 require("dotenv").config();
+
 
 
 const openai = new OpenAI({
@@ -23,78 +25,136 @@ const groq = new Groq({
 
 router.post("/analyze", async (req,res)=>{
 
+
+let audioPath = "";
+
+
 try{
 
-const {youtubeUrl}=req.body;
+
+const {youtubeUrl} = req.body;
+
 
 
 if(!youtubeUrl){
+
 return res.status(400).json({
+
 success:false,
+
 message:"YouTube URL required"
+
 });
+
 }
 
 
-// Download audio
 
-const audioPath =
-path.join(__dirname,"audio.mp3");
+
+audioPath = path.join(
+__dirname,
+`audio-${Date.now()}.mp3`
+);
+
+
+
+
+
+console.log("Downloading audio...");
+
 
 
 await exec(
 youtubeUrl,
 {
+
+output:audioPath,
+
 extractAudio:true,
+
 audioFormat:"mp3",
-output:audioPath
+
+noWarnings:true,
+
+noCheckCertificates:true,
+
+preferFreeFormats:true,
+
+addHeader:[
+"User-Agent: Mozilla/5.0"
+]
+
 }
+
 );
 
 
 
-// Whisper transcription
 
-const transcription =
+
+if(!fs.existsSync(audioPath)){
+
+
+throw new Error(
+"Audio download failed"
+);
+
+
+}
+
+
+
+
+
+console.log("Audio downloaded");
+
+
+
+
+
+const whisper =
 await openai.audio.transcriptions.create({
 
-file: fs.createReadStream(audioPath),
+file:
+fs.createReadStream(audioPath),
 
 model:"whisper-1"
 
 });
 
 
+
+
 const transcript =
-transcription.text;
+whisper.text;
+
 
 
 
 if(!transcript){
 
-return res.status(400).json({
-success:false,
-message:"Transcript generation failed"
-});
+
+throw new Error(
+"Transcript generation failed"
+);
+
 
 }
 
 
 
-// Groq Analysis
+
+
 
 const prompt = `
 
+You are an educational AI assistant.
+
 Analyze this lecture.
 
-Create:
+Return ONLY valid JSON.
 
-1. Summary
-2. Three quiz questions with answers
-3. Simple explanation
-
-
-Return JSON:
+Format:
 
 {
 "summary":"",
@@ -110,13 +170,17 @@ Return JSON:
 
 Transcript:
 
-${transcript.substring(0,12000)}
+${transcript.substring(0,10000)}
 
 `;
 
 
 
-const completion =
+
+
+
+
+const aiResponse =
 await groq.chat.completions.create({
 
 model:"llama-3.1-8b-instant",
@@ -128,44 +192,69 @@ content:prompt
 }
 ],
 
-temperature:0.3
+temperature:0.2
 
 });
 
 
 
+
+
+let text =
+aiResponse.choices[0].message.content;
+
+
+
+
+// remove markdown json
+
+text =
+text.replace(/```json/g,"")
+.replace(/```/g,"")
+.trim();
+
+
+
+
+
 let result;
+
 
 try{
 
+
 result =
-JSON.parse(
-completion.choices[0].message.content
-);
+JSON.parse(text);
 
 
 }
+
 catch{
+
 
 result={
 
-summary:
-completion.choices[0].message.content,
+summary:text,
 
 quiz:[],
 
-explanation:
-completion.choices[0].message.content
+explanation:text
 
 };
+
 
 }
 
 
 
-res.json({
+
+
+
+return res.json({
 
 success:true,
+
+message:"Analysis completed",
 
 data:result
 
@@ -173,13 +262,18 @@ data:result
 
 
 
+
+
 }
 
 catch(error){
 
+
 console.log(error);
 
-res.status(500).json({
+
+
+return res.status(500).json({
 
 success:false,
 
@@ -187,10 +281,29 @@ message:error.message
 
 });
 
+
 }
+
+finally{
+
+
+if(
+audioPath &&
+fs.existsSync(audioPath)
+){
+
+fs.unlinkSync(audioPath);
+
+}
+
+
+}
+
 
 
 });
 
 
-module.exports=router;
+
+
+module.exports = router;
