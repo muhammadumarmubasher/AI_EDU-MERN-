@@ -2,11 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const Groq = require("groq-sdk");
-const OpenAI = require("openai");
-const ytdlp = require("yt-dlp-exec");
-
-const fs = require("fs");
-const path = require("path");
+const { YoutubeTranscript } = require("youtube-transcript");
 
 require("dotenv").config();
 
@@ -16,101 +12,52 @@ const groq = new Groq({
 });
 
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
-});
 
+router.post("/analyze", async (req,res)=>{
 
-
-router.post("/analyze", async (req, res) => {
-
-    try {
-
+    try{
 
         const { youtubeUrl } = req.body;
 
 
-        if (!youtubeUrl) {
+        if(!youtubeUrl){
 
             return res.status(400).json({
-
                 success:false,
                 message:"YouTube URL required"
-
             });
 
         }
 
 
 
-        const audioPath =
-        path.join(__dirname, "lecture.mp3");
+        let transcript;
 
 
+        try{
 
-        // =========================
-        // Download YouTube Audio
-        // =========================
-
-
-        await ytdlp(
-            youtubeUrl,
-            {
-                extractAudio:true,
-                audioFormat:"mp3",
-                output:audioPath
-            }
-        );
+            const data =
+            await YoutubeTranscript.fetchTranscript(youtubeUrl);
 
 
+            transcript =
+            data.map(item=>item.text).join(" ");
 
 
-        // =========================
-        // Whisper Transcript
-        // =========================
-
-
-        const transcription =
-        await openai.audio.transcriptions.create({
-
-            file:
-            fs.createReadStream(audioPath),
-
-            model:"whisper-1"
-
-        });
-
-
-
-        const transcript =
-        transcription.text;
-
-
-
-        if(fs.existsSync(audioPath)){
-            fs.unlinkSync(audioPath);
         }
-
-
-
-        if(!transcript){
+        catch(error){
 
             return res.status(400).json({
 
                 success:false,
 
-                message:"Transcript generation failed"
+                message:
+                "This video does not have captions. Please use a video with subtitles."
 
             });
 
         }
 
-
-
-
-        // =========================
-        // Groq Analysis
-        // =========================
 
 
         const prompt = `
@@ -119,14 +66,14 @@ You are an AI educational assistant.
 
 Analyze this lecture transcript.
 
-Generate:
+Create:
 
 1. Short summary
 2. Three quiz questions with answers
 3. Simple explanation
 
 
-Return ONLY JSON:
+Return only JSON:
 
 {
 "summary":"",
@@ -169,7 +116,7 @@ ${transcript.substring(0,12000)}
         let result;
 
 
-        try {
+        try{
 
             result =
             JSON.parse(
@@ -177,7 +124,7 @@ ${transcript.substring(0,12000)}
             );
 
         }
-        catch {
+        catch{
 
             result={
 
@@ -203,11 +150,11 @@ ${transcript.substring(0,12000)}
 
             data:{
 
-                summary:result.summary || "",
+                summary:result.summary,
 
-                quiz:result.quiz || [],
+                quiz:result.quiz,
 
-                explanation:result.explanation || ""
+                explanation:result.explanation
 
             }
 
@@ -218,11 +165,7 @@ ${transcript.substring(0,12000)}
     }
     catch(error){
 
-
-        console.log(
-            "Analyzer Error:",
-            error.message
-        );
+        console.log(error);
 
 
         res.status(500).json({
@@ -233,12 +176,9 @@ ${transcript.substring(0,12000)}
 
         });
 
-
     }
 
-
 });
-
 
 
 module.exports = router;
