@@ -15,52 +15,80 @@ const groq = new Groq({
 
 router.post("/analyze", async (req,res)=>{
 
-    try{
-
-        const { youtubeUrl } = req.body;
+try{
 
 
-        if(!youtubeUrl){
-
-            return res.status(400).json({
-                success:false,
-                message:"YouTube URL required"
-            });
-
-        }
+const {youtubeUrl}=req.body;
 
 
+if(!youtubeUrl){
 
-        let transcript;
+return res.status(400).json({
 
+success:false,
+message:"YouTube URL required"
 
-        try{
+});
 
-            const data =
-            await YoutubeTranscript.fetchTranscript(youtubeUrl);
-
-
-            transcript =
-            data.map(item=>item.text).join(" ");
-
-
-        }
-        catch(error){
-
-            return res.status(400).json({
-
-                success:false,
-
-                message:
-                "This video does not have captions. Please use a video with subtitles."
-
-            });
-
-        }
+}
 
 
 
-        const prompt = `
+// GET TRANSCRIPT
+
+let transcript="";
+
+
+try{
+
+
+const data =
+await YoutubeTranscript.fetchTranscript(youtubeUrl);
+
+
+
+transcript =
+data.map(item=>item.text).join(" ");
+
+
+
+}
+
+catch(error){
+
+
+return res.status(400).json({
+
+success:false,
+
+message:
+"This video does not have captions/transcript available"
+
+});
+
+
+}
+
+
+
+if(!transcript){
+
+return res.status(400).json({
+
+success:false,
+
+message:"Transcript empty"
+
+});
+
+}
+
+
+
+// GROQ AI
+
+
+const prompt = `
 
 You are an AI educational assistant.
 
@@ -68,12 +96,12 @@ Analyze this lecture transcript.
 
 Create:
 
-1. Short summary
+1. Summary
 2. Three quiz questions with answers
 3. Simple explanation
 
 
-Return only JSON:
+Return JSON only:
 
 {
 "summary":"",
@@ -95,90 +123,97 @@ ${transcript.substring(0,12000)}
 
 
 
-        const completion =
-        await groq.chat.completions.create({
+const completion =
+await groq.chat.completions.create({
 
-            model:"llama-3.1-8b-instant",
+model:"llama-3.1-8b-instant",
 
-            messages:[
-                {
-                    role:"user",
-                    content:prompt
-                }
-            ],
+messages:[
+{
+role:"user",
+content:prompt
+}
+],
 
-            temperature:0.3
-
-        });
-
-
-
-        let result;
-
-
-        try{
-
-            result =
-            JSON.parse(
-                completion.choices[0].message.content
-            );
-
-        }
-        catch{
-
-            result={
-
-                summary:
-                completion.choices[0].message.content,
-
-                quiz:[],
-
-                explanation:
-                completion.choices[0].message.content
-
-            };
-
-        }
-
-
-
-        res.json({
-
-            success:true,
-
-            message:"Analysis completed",
-
-            data:{
-
-                summary:result.summary,
-
-                quiz:result.quiz,
-
-                explanation:result.explanation
-
-            }
-
-        });
-
-
-
-    }
-    catch(error){
-
-        console.log(error);
-
-
-        res.status(500).json({
-
-            success:false,
-
-            message:error.message
-
-        });
-
-    }
+temperature:0.3
 
 });
 
 
-module.exports = router;
+
+let result;
+
+
+try{
+
+result =
+JSON.parse(
+completion.choices[0].message.content
+);
+
+
+}
+catch(e){
+
+result={
+
+summary:
+completion.choices[0].message.content,
+
+quiz:[],
+
+explanation:
+completion.choices[0].message.content
+
+};
+
+
+}
+
+
+
+
+res.json({
+
+success:true,
+
+message:"Analysis completed",
+
+data:{
+
+summary:result.summary,
+
+quiz:result.quiz,
+
+explanation:result.explanation
+
+}
+
+});
+
+
+
+}
+
+catch(error){
+
+
+console.log(error);
+
+
+res.status(500).json({
+
+success:false,
+
+message:error.message
+
+});
+
+
+}
+
+
+});
+
+
+module.exports=router;
